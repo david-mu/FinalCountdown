@@ -49,20 +49,19 @@ fun MyApp() {
     Surface(color = MaterialTheme.colors.background) {
         Column {
             for (digit in 0..9) {
-                Digit(figure = digit.toFigure())
+                Digit(  digit.toFigure().controlPoints)
             }
         }
     }
 }
 
 @Composable
-fun Digit(figure: Figure) {
+fun Digit(controlPoints: Array<FloatArray>) {
     val color = MaterialTheme.colors.onSurface
     Canvas(modifier = Modifier.height(100.dp).width(50.dp)) {
         val width = size.width
         val height = size.height
         val minDimen = if (height > width) width else height
-        val controlPoints = figure.controlPoints
         val path = Path()
 
         path.moveTo(minDimen * controlPoints[0][0], minDimen * controlPoints[0][1])
