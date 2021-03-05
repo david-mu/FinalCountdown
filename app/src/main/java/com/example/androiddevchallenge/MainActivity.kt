@@ -17,27 +17,35 @@ package com.example.androiddevchallenge
 
 import android.os.Bundle
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.androiddevchallenge.ui.theme.MyTheme
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val timerViewModel: TimerViewModel by viewModels()
         setContent {
             MyTheme {
-                MyApp()
+                MyApp(timerViewModel)
             }
         }
     }
@@ -45,20 +53,49 @@ class MainActivity : AppCompatActivity() {
 
 // Start building your app here!
 @Composable
-fun MyApp() {
+fun MyApp(timerViewModel: TimerViewModel) {
     Surface(color = MaterialTheme.colors.background) {
         Column {
-            for (digit in 0..9) {
-                Digit(  digit.toFigure().controlPoints)
+            Row {
+                val remainingTime3: Int by timerViewModel.digit3.observeAsState(0)
+                Digit(transition(remainingTime3.toFigure()))
+                val remainingTime2: Int by timerViewModel.digit2.observeAsState(0)
+                Digit(transition(remainingTime2.toFigure()))
+                val remainingTime1: Int by timerViewModel.digit1.observeAsState(0)
+                Digit(transition(remainingTime1.toFigure()))
+                val remainingTime0: Int by timerViewModel.digit0.observeAsState(0)
+                Digit(transition(remainingTime0.toFigure()))
+            }
+            val isRunning: Boolean by timerViewModel.isRunning.observeAsState(false)
+            if (isRunning) {
+                Button(onClick = { timerViewModel.pauseTimer() }) { Text(text = "Pause") }
+            } else {
+                Button(onClick = { timerViewModel.startTimer() }) { Text(text = "Start") }
             }
         }
     }
 }
 
 @Composable
+fun transition(newFigure: Figure): Array<FloatArray> {
+    val transitionPoints = Array(newFigure.controlPoints.size) { FloatArray(2) }
+
+    val transition = updateTransition(targetState = newFigure)
+    for (i in newFigure.controlPoints.indices) {
+        transitionPoints[i][0] = transition.animateFloat { figure -> figure.controlPoints[i][0] }.value
+        transitionPoints[i][1] = transition.animateFloat { figure -> figure.controlPoints[i][1] }.value
+    }
+    return transitionPoints
+}
+
+@Composable
 fun Digit(controlPoints: Array<FloatArray>) {
     val color = MaterialTheme.colors.onSurface
-    Canvas(modifier = Modifier.height(100.dp).width(50.dp)) {
+    Canvas(
+        modifier = Modifier
+            .height(80.dp)
+            .width(80.dp)
+    ) {
         val width = size.width
         val height = size.height
         val minDimen = if (height > width) width else height
@@ -77,21 +114,5 @@ fun Digit(controlPoints: Array<FloatArray>) {
         }
 
         drawPath(path, color = color, style = Stroke(width = 5.dp.toPx()))
-    }
-}
-
-@Preview("Light Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun LightPreview() {
-    MyTheme {
-        MyApp()
-    }
-}
-
-@Preview("Dark Theme", widthDp = 360, heightDp = 640)
-@Composable
-fun DarkPreview() {
-    MyTheme(darkTheme = true) {
-        MyApp()
     }
 }
