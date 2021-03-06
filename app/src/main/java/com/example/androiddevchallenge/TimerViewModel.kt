@@ -15,15 +15,15 @@
  */
 package com.example.androiddevchallenge
 
+import android.os.CountDownTimer
 import androidx.lifecycle.LiveData
+import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import java.util.Timer
-import java.util.TimerTask
-import kotlin.concurrent.fixedRateTimer
 
 class TimerViewModel : ViewModel() {
-    var remainingTime = 12 * 60
+    private var _remainingTime = MutableLiveData<Int>()
+    private val _mediator: MediatorLiveData<Int> = MediatorLiveData<Int>()
 
     private val _digit0 = MutableLiveData<Int>()
     private val _digit1 = MutableLiveData<Int>()
@@ -36,40 +36,50 @@ class TimerViewModel : ViewModel() {
     val digit2: LiveData<Int> get() = _digit2
     val digit3: LiveData<Int> get() = _digit3
     val isRunning: LiveData<Boolean> get() = _isRunning
-    var timer: Timer? = null
+
+    private var _countDownTimer: CountDownTimer? = null
+
+    private val initialRemainingTime = 15 * 60
 
     fun startTimer() {
         _isRunning.value = true
-        timer = fixedRateTimer(period = 1000, initialDelay = 1000, action = runTimer())
-    }
+        _countDownTimer = object : CountDownTimer(1000L.times(_remainingTime.value!! + 1), 1000L) {
+            override fun onTick(millisUntilFinished: Long) {
+                _remainingTime.postValue((millisUntilFinished / 1000).toInt())
+            }
 
-    private fun runTimer(): TimerTask.() -> Unit = {
-        remainingTime--
-        if (remainingTime < 0) {
-            _isRunning.value = false
-            cancel()
-        } else {
-            val d0 = remainingTime % 60 % 10
-            if (_digit0.value != d0) {
-                _digit0.postValue(d0)
-            }
-            val d1 = remainingTime % 60 / 10
-            if (_digit1.value != d1) {
-                _digit1.postValue(d1)
-            }
-            val d2 = remainingTime / 60 % 10
-            if (_digit2.value != d2) {
-                _digit2.postValue(d2)
-            }
-            val d3 = remainingTime / 60 / 10
-            if (_digit3.value != d3) {
-                _digit3.postValue(d3)
+            override fun onFinish() {
+                _isRunning.value = false
             }
         }
+        checkNotNull(_countDownTimer).start()
     }
 
     fun pauseTimer() {
-        timer?.cancel()
         _isRunning.value = false
+        _countDownTimer?.cancel()
+    }
+
+    init {
+        _mediator.observeForever {}
+        _mediator.addSource(_remainingTime) {
+            val d0 = it % 60 % 10
+            if (_digit0.value != d0) {
+                _digit0.value = d0
+            }
+            val d1 = it % 60 / 10
+            if (_digit1.value != d1) {
+                _digit1.value = d1
+            }
+            val d2 = it / 60 % 10
+            if (_digit2.value != d2) {
+                _digit2.value = d2
+            }
+            val d3 = it / 60 / 10
+            if (_digit3.value != d3) {
+                _digit3.value = d3
+            }
+        }
+        _remainingTime.value = initialRemainingTime
     }
 }
