@@ -19,10 +19,11 @@ import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.TweenSpec
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -64,13 +66,24 @@ class MainActivity : AppCompatActivity() {
 // Start building your app here!
 @Composable
 fun MyApp(timerViewModel: TimerViewModel) {
-    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+    val remainingTime0: Int by timerViewModel.digit0.observeAsState(0)
+    val targetColor = Color(
+        when (remainingTime0) {
+            0, 1 -> 0xFFCBE4F9
+            2, 3 -> 0xFFCDF5F6
+            4, 5 -> 0xFFEFF9DA
+            6, 7 -> 0xFFF9EBDF
+            8, 9 -> 0xFFF9D8D6
+            else -> 0
+        }
+    )
+    val color by animateColorAsState(targetValue = targetColor, animationSpec = TweenSpec(durationMillis = 2000))
+    Surface(modifier = Modifier.fillMaxSize(), color = color) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Row {
                 val remainingTime3: Int by timerViewModel.digit3.observeAsState(0)
                 val remainingTime2: Int by timerViewModel.digit2.observeAsState(0)
                 val remainingTime1: Int by timerViewModel.digit1.observeAsState(0)
-                val remainingTime0: Int by timerViewModel.digit0.observeAsState(0)
                 Digit(transition(remainingTime3.toFigure()))
                 Digit(transition(remainingTime2.toFigure()))
                 Text(text = ":", style = MaterialTheme.typography.h2)
@@ -93,8 +106,8 @@ fun transition(newFigure: Figure): Array<FloatArray> {
 
     val transition = updateTransition(targetState = newFigure)
     for (i in newFigure.controlPoints.indices) {
-        transitionPoints[i][0] = transition.animateFloat { figure -> figure.controlPoints[i][0] }.value
-        transitionPoints[i][1] = transition.animateFloat { figure -> figure.controlPoints[i][1] }.value
+        transitionPoints[i][0] = transition.animateFloat(transitionSpec = { TweenSpec(durationMillis = 800) }) { figure -> figure.controlPoints[i][0] }.value
+        transitionPoints[i][1] = transition.animateFloat(transitionSpec = { TweenSpec(durationMillis = 800) }) { figure -> figure.controlPoints[i][1] }.value
     }
     return transitionPoints
 }
