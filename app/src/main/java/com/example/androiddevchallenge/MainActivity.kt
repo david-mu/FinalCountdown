@@ -22,19 +22,29 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.Button
+import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.example.androiddevchallenge.ui.theme.MyTheme
@@ -54,23 +64,24 @@ class MainActivity : AppCompatActivity() {
 // Start building your app here!
 @Composable
 fun MyApp(timerViewModel: TimerViewModel) {
-    Surface(color = MaterialTheme.colors.background) {
-        Column {
+    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colors.background) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Row {
                 val remainingTime3: Int by timerViewModel.digit3.observeAsState(0)
-                Digit(transition(remainingTime3.toFigure()))
                 val remainingTime2: Int by timerViewModel.digit2.observeAsState(0)
-                Digit(transition(remainingTime2.toFigure()))
                 val remainingTime1: Int by timerViewModel.digit1.observeAsState(0)
-                Digit(transition(remainingTime1.toFigure()))
                 val remainingTime0: Int by timerViewModel.digit0.observeAsState(0)
+                Digit(transition(remainingTime3.toFigure()))
+                Digit(transition(remainingTime2.toFigure()))
+                Text(text = ":", style = MaterialTheme.typography.h2)
+                Digit(transition(remainingTime1.toFigure()))
                 Digit(transition(remainingTime0.toFigure()))
             }
             val isRunning: Boolean by timerViewModel.isRunning.observeAsState(false)
             if (isRunning) {
-                Button(onClick = { timerViewModel.pauseTimer() }) { Text(text = "Pause") }
+                FloatingActionButton(onClick = { timerViewModel.pauseTimer() }) { Icon(imageVector = Icons.Filled.Pause, contentDescription = "Pause") }
             } else {
-                Button(onClick = { timerViewModel.startTimer() }) { Text(text = "Start") }
+                FloatingActionButton(onClick = { timerViewModel.startTimer() }) { Icon(imageVector = Icons.Filled.PlayArrow, contentDescription = "Start") }
             }
         }
     }
@@ -93,7 +104,7 @@ fun Digit(controlPoints: Array<FloatArray>) {
     val color = MaterialTheme.colors.onSurface
     Canvas(
         modifier = Modifier
-            .height(80.dp)
+            .height(130.dp)
             .width(80.dp)
     ) {
         val width = size.width
@@ -113,6 +124,6 @@ fun Digit(controlPoints: Array<FloatArray>) {
             i += 3
         }
 
-        drawPath(path, color = color, style = Stroke(width = 5.dp.toPx()))
+        drawPath(path, color = color, style = Stroke(width = 9.dp.toPx(), join = StrokeJoin.Round, cap = StrokeCap.Round))
     }
 }
